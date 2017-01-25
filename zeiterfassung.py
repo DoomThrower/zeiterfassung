@@ -1,7 +1,8 @@
 import openpyxl
 import collections
 
-path_to_workhours_folder = 'C:/Users/DooM/PycharmProjects/zeiterfassung-git/zeiterfassung/'
+# TODO Wymienic CHANGE-ME na sciezke w ktorej znajduje sie katalog z excelami pracownikow. Ostatni slash jest potrzebny
+path_to_workhours_folder = 'C:/CHANGE-ME/'
 
 wb = openpyxl.load_workbook(filename='employee-list.xlsx')
 ws = wb.get_sheet_by_name('Lista pracownikow')
@@ -16,7 +17,7 @@ def format_path(name):
     """ Generuje sciezke do pliku z excelem pracownika """
     return path_to_workhours_folder + name + '/' + name + '-zeiterfassung.xlsx'
 
-
+# TODO na razie to wypisuje wyniki na ekran. Zrozumiec jak dziala openpyxl i zapisac je do excela :)
 def process_employee(name):
     """ Przetwarza godziny pracownika """
     print name
