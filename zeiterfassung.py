@@ -1,8 +1,13 @@
+# encoding=utf8
+import sys
 import openpyxl
 import collections
 
+reload(sys)
+sys.setdefaultencoding('utf8')
+
 # TODO Wymienic CHANGE-ME na sciezke w ktorej znajduje sie katalog z excelami pracownikow. Ostatni slash jest potrzebny
-path_to_workhours_folder = 'C:/CHANGE-ME/'
+path_to_workhours_folder = 'C:/CHANGEME/'
 
 wb = openpyxl.load_workbook(filename='employee-list.xlsx')
 ws = wb.get_sheet_by_name('Lista pracownikow')
@@ -17,6 +22,16 @@ def format_path(name):
     """ Generuje sciezke do pliku z excelem pracownika """
     return path_to_workhours_folder + name + '/' + name + '-zeiterfassung.xlsx'
 
+
+def extract_project_names(worksheet):
+    project_names = []
+    for row_idx in range(3, worksheet.max_row + 1):
+        project_name = worksheet.cell(row=row_idx, column=3).value
+        if project_name is not None:
+            project_names.append(project_name)
+    return project_names
+
+
 # TODO na razie to wypisuje wyniki na ekran. Zrozumiec jak dziala openpyxl i zapisac je do excela :)
 def process_employee(name):
     """ Przetwarza godziny pracownika """
@@ -25,12 +40,23 @@ def process_employee(name):
     employee_wb = openpyxl.load_workbook(filename=format_path(name), data_only=True)
     projects_dict = {}
     # dla kazdego arkusza w pliku
-    for employee_ws in employee_wb.worksheets:
-        # dla rzedow z projektami/godzinami
-        for row_idx in range(4, employee_ws.max_row + 1):
-            project_name = employee_ws.cell(row=row_idx, column=1).value
-            hours = employee_ws.cell(row=row_idx, column=20).value # nie wiem czy zawsze w 20 kolumnie bedzie suma godzin
-            add_project_hours(projects_dict, project_name, hours)
+    is_first_ws = True
+    for worksheet in employee_wb:
+        # jesli pierwszy, to wyciagamy liste projektow
+        if is_first_ws:
+            project_names = extract_project_names(worksheet)
+            # dla kazdego projektu, ustawiamy jego ilosc godzin na 0
+            for project_name in project_names:
+                add_project_hours(projects_dict, project_name, 0)
+            # koniec obslugi pierwszego, przetwarzamy pozostale
+            is_first_ws = False
+        else:
+            for row_idx in range(2, worksheet.max_row + 1):
+                project_name = worksheet.cell(row=row_idx, column=1).value
+                hours = worksheet.cell(row=row_idx, column=worksheet.max_column).value
+                # jesli znalazl projekt i godziny nad nim spedzone, dodajemy
+                if project_name is not None and hours is not None:
+                    add_project_hours(projects_dict, project_name, hours)
     # sortujemy slownik
     workhours = collections.OrderedDict(sorted(projects_dict.items()))
     for item in workhours.items():
